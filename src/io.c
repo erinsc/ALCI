@@ -9,33 +9,90 @@ void print_raw(store_t *store) {
         char name[4];
         
         switch(node.type) {
-        case Var: strncpy(name, "Var", 4); break;
-        case Shr: strncpy(name, "Shr", 4); break;
-        case App: strncpy(name, "App", 4); break;
-        case Abs: strncpy(name, "Abs", 4); break;
+        case Del:
+        printf("%d = Del %d, %d\n", i, node.main, node.side);
+        break;
+        case Var:
+        printf("%d = <%d> [%d]\n", i, node.main, node.side);
+        break;
+        case Shr:
+        printf("%d = <%d> {%d}\n", i, node.main, node.side);
+        break;
+        case App: strncpy(name, "App", 4);
+        printf("%d = (%d %d)\n", i, node.main, node.side);
+        break;
+        case Abs: strncpy(name, "Abs", 4);
+        printf("%d = \\%d.%d\n", i, node.side, node.main);
+        break;
         }
-        printf("%d = [%s, %d, %d]\n",i , name, node.main, node.side);
     }
 }
 
-void print_tree(store_t *store, uint root) {
-    switch(store->nodes[root].type) {
-    case Var:
-        printf("%d[%d]", root, store->nodes[root].side);
+void print_tree_node(store_t *store, uint node);
+
+void print_tree_abs(store_t *store, uint node) {
+    printf("\\%d", store->nodes[node].side);
+    
+    node = store->nodes[node].main;
+    
+    while (store->nodes[node].type == Abs) {
+        printf(" %d", store->nodes[node].side);
+        node = store->nodes[node].main;
+    }
+    printf(".");
+    print_tree_node(store, node);
+}
+
+void print_tree_node(store_t *store, uint node) {
+    switch(store->nodes[node].type) {
+        case Del:
+        printf("-X-");
         break;
-    case Shr:
-        printf("%d{%d}", root, store->nodes[root].side);
+        
+        case Var:
+        printf("%d", node);
         break;
-    case Abs:
-        printf("(\\%d.", store->nodes[root].side);
-        print_tree(store, store->nodes[root].main);
-        printf(")");
+        
+        case Shr:
+        printf("{%d}", node);
         break;
-    case App:
-        printf("(");
-        print_tree(store, store->nodes[root].main);
+        
+        case Abs:
+        print_tree_abs(store, node);
+        break;
+        
+        case App:
+        uint func = store->nodes[node].main;
+        
+        if (store->nodes[func].type == Abs) {
+            printf("(");
+            print_tree_node(store, func);
+            printf(")");
+        }
+        else
+            print_tree_node(store, func);
+        
         printf(" ");
-        print_tree(store, store->nodes[root].side);
-        printf(")");
+        
+        uint arg = store->nodes[node].side;
+        
+        if (store->nodes[arg].type == App || store->nodes[arg].type == Abs) {
+            printf("(");
+            print_tree_node(store, arg);
+            printf(")");
+        }
+        else
+            print_tree_node(store, arg);
+    }
+}
+void print_tree(store_t *store, uint root) {
+    print_tree_node(store, root);
+    printf("\n");
+    for (int i = 0; i < store->capacity; ++i) {
+        if (store->nodes[i].type == Shr) {
+            printf("  %d: ", i);
+            print_tree_node(store, store->nodes[i].main);
+            printf("\n");
+        }
     }
 }

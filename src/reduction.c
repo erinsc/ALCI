@@ -2,7 +2,9 @@
 
 uint share_reduce(store_t *store, uint shr) {
     if (--store->nodes[shr].side == 0) {
-        return store->nodes[shr].main;
+        uint body = store->nodes[shr].main;
+        del_node(store, shr);
+        return body;
     }
     return copy_tree(store, store->nodes[shr].main);
 }

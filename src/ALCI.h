@@ -2,15 +2,15 @@
 
 typedef unsigned uint;
 
-typedef enum Type { Var, Shr, App, Abs } type_e;
-/* Node types, values they use. Del doesnt have an explicit type
+typedef enum Type { Del, Var, Shr, App, Abs } type_e;
+/* Node types, values they use
  * Type | uint main                          | uint side
  * -----+------------------------------------+----------------------------------
  * Var  | if being copied, ptr to equivalent | number of references of the node
  * Shr  | ptr to term being shared           | number of references of the node
  * App  | ptr to function                    | ptr to argument
  * Abs  | ptr to body of function            | ptr to bound variable
- * Del  | ptr to next node in del ll stack   | unused
+ * Del  | ptr to next node in a ll stack     | extra value for algorithms
  */
 
 // Single node of an LC tree
@@ -30,8 +30,11 @@ typedef struct Store {
 
 // store.c
 store_t new_store(uint capacity);
-uint new_node(store_t *store, type_e type, uint func, uint arg);
-void del_node(store_t *store, uint index);
+void push_stack(store_t *store, uint *pointer, uint node);
+uint pop_stack(store_t *store, uint *pointer);
+uint new_node(store_t *store, type_e type, uint main, uint side);
+uint new_var(store_t *store);
+void del_node(store_t *store, uint node);
 void del_tree(store_t *store, uint root);
 uint copy_tree(store_t *store, uint root);
 
